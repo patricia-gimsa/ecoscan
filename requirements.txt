@@ -1,0 +1,25 @@
+# Core
+numpy==2.3.2
+pandas==2.3.1
+scikit-learn==1.7.1
+
+# Deep Learning / Transformers
+torch==2.8.0
+torchvision==0.23.0
+transformers==4.55.2
+tqdm==4.67.1
+
+# Image processing
+pillow==11.3.0
+
+# Notebooks
+jupyter==1.1.1
+notebook==7.4.5
+
+# Visualization
+matplotlib==3.10.5
+seaborn==0.13.2
+
+# Utilities
+requests==2.32.5
+icrawler==0.6.10

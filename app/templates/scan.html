@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoScan - Scan</title>
+  <!-- # TailwindCSS CDN for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen relative font-sans">
+
+  <!-- # BACKGROUND: same as start.html -->
+  <div class="fixed inset-0 bg-cover bg-center"
+       style="background-image:url('../static/eco_background.png');"></div>
+  <div class="fixed inset-0 bg-gradient-to-b from-green-200/12 via-green-300/10 to-green-400/12"></div>
+
+  <!-- # CONTENT -->
+  <main class="relative min-h-screen flex items-center justify-center px-4">
+    <div class="bg-white/95 rounded-2xl shadow-xl w-full max-w-lg p-6 sm:p-8">
+
+      <!-- # Header: logo + title -->
+      <div class="mb-4 text-center">
+        <img src="../static/ecoscan_logo.png" alt="EcoScan Logo"
+             class="mx-auto" style="width: 340px; height: auto;" />
+      </div>
+
+      <h1 class="text-2xl font-extrabold text-green-700 text-center">Scan an item</h1>
+      <p class="text-gray-600 text-center mt-2 mb-6">Take a photo or upload from your gallery</p>
+
+      <!-- # Actions: Take photo / Upload photo -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+        <!-- # Hidden inputs (native pickers) -->
+        <input id="cameraInput" type="file" accept="image/*" capture="environment" class="hidden" />
+        <input id="fileInput" type="file" accept="image/*" class="hidden" />
+
+        <button id="btnCamera"
+          class="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-green-600 text-white font-semibold shadow-md hover:bg-green-700 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9 3a1 1 0 00-.894.553L7.382 5H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2h-2.382l-.724-1.447A1 1 0 0013 3H9zM12 18a5 5 0 110-10 5 5 0 010 10z"/>
+          </svg>
+          Take photo
+        </button>
+
+        <button id="btnUpload"
+          class="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-emerald-500 text-white font-semibold shadow-md hover:bg-emerald-600 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3l4 4h-3v6h-2V7H8l4-4zm-7 14h14v2H5v-2z"/>
+          </svg>
+          Upload photo
+        </button>
+      </div>
+
+      <!-- # Dropzone + Preview -->
+      <div id="dropZone"
+           class="group border-2 border-dashed border-emerald-300 rounded-2xl p-5 text-center transition hover:border-emerald-400 bg-emerald-50/50">
+        <div id="helperText" class="text-emerald-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto mb-2 h-8 w-8 opacity-80" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 19a4 4 0 010-8 5 5 0 119.9-1.2A4 4 0 1117 19H6z"/>
+          </svg>
+          <p class="font-medium">Drag & drop an image here</p>
+          <p class="text-sm text-emerald-700/80">JPG, PNG or HEIC • up to ~8MB</p>
+        </div>
+
+        <div id="preview" class="hidden">
+          <img id="previewImg" alt="Preview"
+               class="mx-auto rounded-xl shadow-md max-h-80 object-contain" />
+          <div class="flex gap-2 justify-center mt-3">
+            <button id="btnChange"
+              class="px-4 py-2 rounded-lg border border-emerald-400 text-emerald-700 hover:bg-emerald-50">
+              Change photo
+            </button>
+            <button id="btnRemove"
+              class="px-4 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50">
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- # Footer actions: Back / Next -->
+      <div class="flex items-center justify-between mt-6">
+        <button id="btnBack"
+          class="px-4 py-2 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50">
+          Back
+        </button>
+
+        <button id="btnNext" disabled
+          class="px-6 py-2 rounded-xl bg-green-600 text-white font-semibold shadow-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-green-700 transition">
+          Next
+        </button>
+      </div>
+
+      <p class="text-[12px] text-gray-500 mt-3 text-center">
+        We only use the image to classify the item. We don’t store your photo.
+      </p>
+    </div>
+  </main>
+
+  <!-- # CAMERA MODAL (desktop) -->
+  <div id="cameraModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl w-full max-w-xl p-4 shadow-2xl">
+      <h2 class="text-lg font-semibold text-gray-800 mb-3">Take a photo</h2>
+      <div class="relative rounded-xl overflow-hidden bg-black">
+        <video id="video" autoplay playsinline class="w-full max-h-[60vh] object-contain"></video>
+        <!-- # Optional: guide frame -->
+        <div class="absolute inset-0 pointer-events-none ring-2 ring-emerald-400/70 rounded-xl m-4"></div>
+      </div>
+      <canvas id="canvas" class="hidden"></canvas>
+      <div class="flex gap-2 justify-end mt-4">
+        <button id="btnCancelCam" class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Cancel</button>
+        <button id="btnSnap" class="px-4 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600">Capture</button>
+        <button id="btnUsePhoto" disabled class="px-4 py-2 rounded-lg bg-green-600 text-white opacity-40 cursor-not-allowed">Use photo</button>
+      </div>
+      <p class="text-xs text-gray-500 mt-2">Tip: Camera access needs HTTPS or http://localhost.</p>
+    </div>
+  </div>
+
+  <script>
+    // # -------------------------------
+    // # CONFIG
+    // # -------------------------------
+    // # Backend base URL (change only if you use another host/port)
+    const API_BASE = 'http://127.0.0.1:8000';
+    // # Optional constraints
+    const MAX_MB = 8;
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/heif', 'image/webp'];
+
+    // # -------------------------------
+    // # ELEMENTS
+    // # -------------------------------
+    const btnCamera = document.getElementById('btnCamera');
+    const btnUpload = document.getElementById('btnUpload');
+    const cameraInput = document.getElementById('cameraInput');
+    const fileInput = document.getElementById('fileInput');
+
+    const dropZone = document.getElementById('dropZone');
+    const helperText = document.getElementById('helperText');
+    const preview = document.getElementById('preview');
+    const previewImg = document.getElementById('previewImg');
+
+    const btnChange = document.getElementById('btnChange');
+    const btnRemove = document.getElementById('btnRemove');
+    const btnBack = document.getElementById('btnBack');
+    const btnNext = document.getElementById('btnNext');
+
+    // # Camera modal elements
+    const cameraModal = document.getElementById('cameraModal');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const btnCancelCam = document.getElementById('btnCancelCam');
+    const btnSnap = document.getElementById('btnSnap');
+    const btnUsePhoto = document.getElementById('btnUsePhoto');
+
+    // # State
+    let mediaStream = null;     // # webcam stream
+    let snappedDataUrl = null;  // # base64 from webcam capture
+    let lastFile = null;        // # File object selected by the user
+    let lastDataUrl = null;     // # DataURL used for preview (file or camera)
+
+    // # -------------------------------
+    // # HELPERS
+    // # -------------------------------
+    const mb = bytes => bytes / (1024 * 1024);
+
+    // # Convert a dataURL (base64) to a Blob (for FormData)
+    function dataURLtoBlob(dataUrl) {
+      const [header, base64] = dataUrl.split(',');
+      const mime = (header.match(/data:(.*?);base64/) || [])[1] || 'image/jpeg';
+      const bin = atob(base64);
+      const len = bin.length;
+      const arr = new Uint8Array(len);
+      for (let i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);
+      return new Blob([arr], { type: mime });
+    }
+
+    function setPreview(dataUrl) {
+      lastDataUrl = dataUrl;
+      previewImg.src = dataUrl;
+      helperText.classList.add('hidden');
+      preview.classList.remove('hidden');
+      btnNext.disabled = false;
+      // # Save preview for results.html
+      try { sessionStorage.setItem('ecoscan_preview', dataUrl); } catch(e) {}
+    }
+
+    function clearPreview() {
+      lastFile = null;
+      lastDataUrl = null;
+      snappedDataUrl = null;
+      previewImg.src = '';
+      preview.classList.add('hidden');
+      helperText.classList.remove('hidden');
+      btnNext.disabled = true;
+      cameraInput.value = '';
+      fileInput.value = '';
+      try { sessionStorage.removeItem('ecoscan_preview'); } catch(e) {}
+      try { sessionStorage.removeItem('ecoscan_prediction'); } catch(e) {}
+    }
+
+    function setLoading(isLoading) {
+      btnNext.disabled = isLoading || !lastDataUrl;
+      btnBack.disabled = isLoading;
+      btnChange.disabled = isLoading;
+      btnRemove.disabled = isLoading;
+      if (isLoading) {
+        btnNext.textContent = 'Processing...';
+      } else {
+        btnNext.textContent = 'Next';
+      }
+    }
+
+    // # -------------------------------
+    // # BUTTONS (Upload / Camera)
+    // # -------------------------------
+    btnUpload.addEventListener('click', () => fileInput.click());
+
+    btnCamera.addEventListener('click', async () => {
+      // # Try native camera on mobile first (capture attribute)
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile) return cameraInput.click();
+
+      // # Desktop: open webcam with getUserMedia
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          // # Fallback to file picker
+          return fileInput.click();
+        }
+        mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+        video.srcObject = mediaStream;
+        cameraModal.classList.remove('hidden');
+        cameraModal.classList.add('flex');
+        btnUsePhoto.disabled = true;
+        btnUsePhoto.classList.add('opacity-40','cursor-not-allowed');
+        snappedDataUrl = null;
+      } catch (err) {
+        // # If permission denied or not available, fallback to file picker
+        console.warn('Camera not available:', err);
+        fileInput.click();
+      }
+    });
+
+    // # Take snapshot from video
+    btnSnap.addEventListener('click', () => {
+      if (!video.videoWidth) return;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+      snappedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      btnUsePhoto.disabled = false;
+      btnUsePhoto.classList.remove('opacity-40','cursor-not-allowed');
+    });
+
+    // # Use the snapped photo into the preview
+    btnUsePhoto.addEventListener('click', () => {
+      if (!snappedDataUrl) return;
+      stopStream();
+      closeModal();
+      lastFile = null;                 // # we will upload from dataURL (camera)
+      setPreview(snappedDataUrl);
+    });
+
+    btnCancelCam.addEventListener('click', () => {
+      stopStream();
+      closeModal();
+    });
+
+    function stopStream() {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(t => t.stop());
+        mediaStream = null;
+      }
+    }
+    function closeModal() {
+      cameraModal.classList.add('hidden');
+      cameraModal.classList.remove('flex');
+    }
+
+    // # -------------------------------
+    // # FILE INPUTS + DRAG&DROP
+    // # -------------------------------
+    cameraInput.addEventListener('change', handleFile);
+    fileInput.addEventListener('change', handleFile);
+
+    function handleFile(e) {
+      const file = e.target.files?.[0];
+      if (file) readFile(file);
+    }
+
+    // # Drag & drop decoration
+    ['dragenter','dragover'].forEach(evt =>
+      dropZone.addEventListener(evt, e => {
+        e.preventDefault(); e.stopPropagation();
+        dropZone.classList.add('ring-2','ring-emerald-400');
+      })
+    );
+    ['dragleave','drop'].forEach(evt =>
+      dropZone.addEventListener(evt, e => {
+        e.preventDefault(); e.stopPropagation();
+        dropZone.classList.remove('ring-2','ring-emerald-400');
+      })
+    );
+    dropZone.addEventListener('drop', e => {
+      const file = e.dataTransfer.files?.[0];
+      if (file) readFile(file);
+    });
+
+    function readFile(file) {
+      if (!file.type.startsWith('image/')) return alert('Please select an image file');
+      if (ALLOWED_TYPES.length && !ALLOWED_TYPES.includes(file.type)) {
+        // # Allow anyway if browser reports generic "image/*"
+        if (!file.type.startsWith('image/')) return alert('Unsupported image type');
+      }
+      if (mb(file.size) > MAX_MB) return alert(`Image too large (> ${MAX_MB} MB)`);
+
+      lastFile = file;                 // # we will upload this File
+      const reader = new FileReader();
+      reader.onload = () => setPreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+
+    // # Change / Remove
+    btnChange.addEventListener('click', () => fileInput.click());
+    btnRemove.addEventListener('click', clearPreview);
+
+    // # Back
+    btnBack.addEventListener('click', () => window.location.href = 'start.html');
+
+    // # -------------------------------
+    // # NEXT: call backend /predict and go to results
+    // # -------------------------------
+    btnNext.addEventListener('click', async () => {
+      if (!lastDataUrl && !lastFile) return;
+
+      try {
+        setLoading(true);
+
+        // # Build a FormData with the field name 'image' (FastAPI expects this)
+        const form = new FormData();
+
+        if (lastFile) {
+          // # User selected a file -> send it as-is
+          form.append('image', lastFile, lastFile.name || 'upload.jpg');
+        } else {
+          // # We have a camera DataURL -> convert to Blob
+          const blob = dataURLtoBlob(lastDataUrl);
+          form.append('image', blob, 'capture.jpg');
+        }
+
+        const res = await fetch(`${API_BASE}/predict`, { method: 'POST', body: form });
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+        const data = await res.json();
+
+        // # Save prediction for results.html
+        sessionStorage.setItem('ecoscan_prediction', JSON.stringify(data));
+
+        // # Also keep the selected country (if any) from start.html
+        // # (No-op if not present; it's fine)
+        // # sessionStorage.getItem('ecoscan_country');
+
+        // # Go to results
+        window.location.href = 'results.html';
+
+      } catch (err) {
+        console.error(err);
+        alert('Sorry, there was a problem processing your image. Please try again.');
+        setLoading(false);
+      }
+    });
+
+    // # Tip: camera requires HTTPS or http://localhost
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      console.log('Camera access needs HTTPS or http://localhost');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EcoScan - Results</title>
+  <!-- TailwindCSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen relative font-sans">
+
+  <!-- BACKGROUND -->
+  <div class="fixed inset-0 bg-cover bg-center" style="background-image:url('../static/eco_background.png');"></div>
+  <div class="fixed inset-0 bg-gradient-to-b from-green-200/12 via-green-300/10 to-green-400/12"></div>
+
+  <!-- CONTENT -->
+  <main class="relative min-h-screen flex items-center justify-center px-4">
+    <div class="bg-white/95 rounded-2xl shadow-xl w-full max-w-lg p-6 sm:p-8">
+
+      <!-- Logo -->
+      <div class="mb-3 text-center">
+        <img src="../static/ecoscan_logo.png" alt="EcoScan Logo" class="mx-auto" style="width:340px; height:auto;" />
+      </div>
+
+      <!-- Country chip -->
+      <div id="countryChip" class="text-center mb-2"></div>
+
+      <h1 class="text-2xl font-extrabold text-green-700 text-center">Results</h1>
+      <p class="text-gray-600 text-center mt-2 mb-6">Classification and local recycling guidance</p>
+
+      <!-- Preview image -->
+      <div id="previewWrap" class="mb-5 hidden">
+        <img id="previewImg" alt="Item preview" class="mx-auto rounded-xl shadow-md max-h-72 object-contain"/>
+      </div>
+
+      <!-- Low-confidence notice -->
+      <div id="warnBox" class="hidden mb-4 rounded-xl bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-900">
+        Our model is not fully confident about this item. You can confirm or correct the category below.
+      </div>
+
+      <!-- Classification -->
+      <section class="bg-emerald-50/60 border border-emerald-200 rounded-2xl p-4 mb-5">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="text-sm text-emerald-700/80">Detected category</p>
+            <div class="flex items-center gap-2 mt-1">
+              <span id="labelBadge" class="inline-block px-3 py-1 rounded-full bg-emerald-600 text-white font-semibold"></span>
+              <span id="confidenceText" class="text-emerald-800 font-medium"></span>
+            </div>
+          </div>
+
+          <!-- Manual correction (choose guidance key) -->
+          <div class="text-right">
+            <label for="manualCat" class="block text-xs text-emerald-800 mb-1">Correct category</label>
+            <select id="manualCat"
+              class="px-3 py-2 border border-emerald-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="">Keep detected</option>
+              <option value="unknown">Unknown / Not sure</option>
+              <option value="battery">Battery</option>
+              <option value="glass">Glass</option>
+              <option value="cardboard">Cardboard</option>
+              <option value="paper">Paper</option>
+              <option value="clothes">Clothes</option>
+              <option value="shoes">Shoes</option>
+              <option value="electronics">Electronics</option>
+              <option value="metal_packaging">Metal packaging</option>
+              <option value="plastic">Plastic</option>
+              <option value="tetrapak">Tetrapak</option>
+              <option value="oil">Oil</option>
+              <option value="organic">Organic</option>
+              <option value="trash">Trash</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Guidance -->
+      <section class="bg-white border border-gray-200 rounded-2xl p-5 mb-5">
+        <!-- Title + badge aligned to right -->
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-lg font-semibold text-gray-800">Recycling guidance (ES)</h2>
+          <span id="groupBadge" class="hidden text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800"></span>
+      </div>
+
+        <!-- Summary -->
+        <p id="summary" class="text-gray-800 font-medium mb-3 text-center"></p>
+
+        <!-- Notes (highlight bar) -->
+        <div id="notes" class="hidden mb-3 rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-900 space-y-1"></div>
+
+        <!-- Do / Don't -->
+        <div id="dosDonts" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 hidden">
+          <div id="dos" class="rounded-lg border border-green-200 bg-green-50 p-3">
+            <div class="flex items-center gap-2 font-semibold text-green-800 mb-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z"/></svg>
+              Do
+            </div>
+            <ul id="doList" class="list-disc pl-5 text-green-900 text-sm space-y-1"></ul>
+          </div>
+          <div id="donts" class="rounded-lg border border-red-200 bg-red-50 p-3">
+            <div class="flex items-center gap-2 font-semibold text-red-800 mb-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.3 5.71L12 12.01 5.7 5.7 4.3 7.11l6.3 6.29-6.3 6.3 1.4 1.41 6.3-6.3 6.29 6.3 1.41-1.41-6.3-6.3 6.3-6.29z"/></svg>
+              Don’t
+            </div>
+            <ul id="dontList" class="list-disc pl-5 text-red-900 text-sm space-y-1"></ul>
+          </div>
+        </div>
+
+        <!-- Extra tips -->
+        <div id="tips" class="text-gray-700 space-y-2"></div>
+
+        <!-- Maps -->
+        <div class="mt-4 flex justify-center">
+          <a id="mapsBtn" target="_blank" rel="noopener noreferrer"
+             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600 text-white font-semibold shadow-md hover:bg-green-700 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/>
+            </svg>
+            Open in Maps
+          </a>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-between">
+        <button id="btnBack" class="px-4 py-2 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50">Back</button>
+        <button id="btnNew" class="px-6 py-2 rounded-xl bg-emerald-500 text-white font-semibold shadow-md hover:bg-emerald-600 transition">New scan</button>
+      </div>
+
+      <p class="text-[12px] text-gray-500 mt-3 text-center">
+        Guidance based on Spain (Ecoembes / Ecovidrio / Ecopilas). Always follow local signage.
+      </p>
+    </div>
+  </main>
+
+  <script>
+    // ------------------------------------------------------------
+    // Country chip
+    // ------------------------------------------------------------
+    const country = localStorage.getItem('ecoscan_country') || 'es';
+    const countryChip = document.getElementById('countryChip');
+    countryChip.innerHTML = `
+      <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-sm">
+        <img src="https://flagcdn.com/w20/${country}.png" alt="${country} flag" class="w-4 h-4 rounded-full">
+        <span>${country.toUpperCase()}</span>
+      </span>
+    `;
+
+    // ------------------------------------------------------------
+    // Preview (new key preferred; old key kept for compatibility)
+    // ------------------------------------------------------------
+    const previewData =
+      sessionStorage.getItem('ecoscan_preview') ||
+      sessionStorage.getItem('ecoscan_last_image'); // legacy
+    const previewWrap = document.getElementById('previewWrap');
+    const previewImg  = document.getElementById('previewImg');
+    if (previewData) { previewImg.src = previewData; previewWrap.classList.remove('hidden'); }
+
+    // ------------------------------------------------------------
+    // Map raw model labels → human label + guidance key
+    // ------------------------------------------------------------
+    const LABEL_MAP = {
+      'battery'         : { display: 'Battery',         key: 'battery' },
+      'brown-glass'     : { display: 'Brown glass',     key: 'glass'   },
+      'white-glass'     : { display: 'White glass',     key: 'glass'   },
+      'green-glass'     : { display: 'Green glass',     key: 'glass'   },
+      'cardboard'       : { display: 'Cardboard',       key: 'cardboard' },
+      'paper'           : { display: 'Paper',           key: 'paper' },
+      'clothes'         : { display: 'Clothes',         key: 'clothes' },
+      'shoes'           : { display: 'Shoes',           key: 'shoes' },
+      'electronics'     : { display: 'Electronics',     key: 'electronics' },
+      'metal_packaging' : { display: 'Metal packaging', key: 'metal_packaging' },
+      'plastic'         : { display: 'Plastic',         key: 'plastic' },
+      'tetrapak'        : { display: 'Tetrapak',        key: 'tetrapak' },
+      'oil'             : { display: 'Oil',             key: 'oil' },
+      'organic'         : { display: 'Organic',         key: 'organic' },
+      'trash'           : { display: 'Trash',           key: 'trash' }
+    };
+
+    // ------------------------------------------------------------
+    // Read prediction from scan.html
+    // { label: string|null, confidence: number, rejected: boolean, debug?: {...} }
+    // ------------------------------------------------------------
+    let pred = null;
+    try { const raw = sessionStorage.getItem('ecoscan_prediction'); pred = raw ? JSON.parse(raw) : null; } catch (_) {}
+
+    // If low confidence / rejected → unknown
+    const warnBox = document.getElementById('warnBox');
+    let detectedDisplay = 'Unknown';
+    let guidanceKey     = 'unknown';
+    let conf            = 0;
+
+    if (pred && pred.label && !pred.rejected) {
+      const map = LABEL_MAP[String(pred.label).toLowerCase()];
+      if (map) {
+        detectedDisplay = map.display;
+        guidanceKey     = map.key;
+        conf            = Number(pred.confidence || 0);
+      } else {
+        warnBox.classList.remove('hidden');
+      }
+    } else {
+      warnBox.classList.remove('hidden');
+    }
+
+    // ------------------------------------------------------------
+    // Detected header UI
+    // ------------------------------------------------------------
+    const labelBadge     = document.getElementById('labelBadge');
+    const confidenceText = document.getElementById('confidenceText');
+    function renderDetected() {
+      labelBadge.textContent = detectedDisplay;
+      confidenceText.textContent = (guidanceKey === 'unknown' || !pred || pred.rejected)
+        ? '• low confidence'
+        : `• ${(conf * 100).toFixed(0)}% confidence`;
+    }
+    renderDetected();
+
+    // ------------------------------------------------------------
+    // Your RECS_EN guidance (as provided)
+    // ------------------------------------------------------------
+    const RECS_EN = {
+      'battery': {
+        title: "Batteries",
+        groupBadge: "Ecopilas bin",
+        summary: "Take them to Ecopilas containers (common in shopping malls) or your closest Punto limpio.",
+        notes: [
+          "Batteries contain heavy metals and are highly polluting if not recycled properly."
+        ],
+        do: [
+          "Prefer rechargeable batteries to reduce waste.",
+          "Keep them in a dry place until drop-off."
+        ],
+        dont: [
+          "Do not throw them in household bins.",
+          "Don’t throw batteries together with electronic devices (phones, toys…). Remove them first and recycle separately."
+        ],
+        tips: [
+          "Many supermarkets and electronics shops have small Ecopilas containers at the entrance."
+        ],
+        maps: "punto limpio cercano a mí"
+      },
+
+      'glass': {
+        title: "Glass (bottles & jars)",
+        groupBadge: "Green bin",
+        summary: "Use the green igloo bin (Ecovidrio). Color separation is not required.",
+        notes: [
+          "The green bin is only for glass packaging (bottles, jars, food containers)."
+        ],
+        do: [
+          "Empty bottles and jars before recycling.",
+          "Remove lids and caps if your city requests it."
+        ],
+        dont: [
+          "Crystal, mirrors, glasses, light bulbs, and cookware are NOT recyclable glass, take to grey bin or Punto limpio."
+        ],
+        tips: [
+          "Glass can be recycled infinitely without losing quality."
+        ],
+        maps: null
+      },
+
+      'cardboard': {
+        title: "Cardboard",
+        groupBadge: "Blue bin",
+        summary: "Cardboard packaging goes in the blue bin (Ecoembes).",
+        notes: [
+          "Only packaging and clean cardboard should go in the blue bin. Remove plastics, tapes or foam before recycling."
+        ],
+        do: [
+          "Fold or cut boxes to save space.",
+          "Take oversized packaging (e.g. fridge boxes) to Punto limpio."
+        ],
+        dont: [
+          "Do not recycle greasy, dirty or wax-coated cardboard."
+        ],
+        tips: [
+          "If you accumulate large amounts, take them to Punto limpio."
+        ],
+        maps: null
+      },
+
+      'paper': {
+        title: "Paper",
+        groupBadge: "Blue Bin",
+        summary: "Clean paper packaging and products go in the blue bin (Ecoembes).",
+        notes: [
+          "Paper recycling works best when the paper is clean and dry"
+        ],
+        do: [
+          "Recycle clean office paper, newspapers, magazines, and paper bags."
+        ],
+        dont: [
+          "Do not recycle thermal paper (shopping receipts).",
+          "Do not recycle plastic-coated, dirty napkins, or greasy paper (e.g. oil stains)."
+        ],
+        tips: [
+          "If you have large volumes of documents, take them directly to Punto limpio.",
+          "Shred personal documents before recycling if they contain sensitive data."
+        ],
+        maps: null
+      },
+
+      'clothes': {
+        title: "Clothes",
+        groupBadge: "NGO containers",
+        summary: "Use textile containers (white/orange) managed by NGOs (Cáritas, Humana, Cruz Roja).",
+        notes: [
+          "Clothes must always be clean, dry, and placed inside closed bags before drop-off."
+        ],
+        do: [
+          "If no textile container is available, bring them to the municipal Punto limpio.",
+          "Donate wearable clothes directly to NGOs or charity shops."
+        ],
+        dont: [
+          "Do not put underwear, socks or damaged/dirty clothes in textile containers, use grey bin."
+        ],
+        tips: [
+          "Prefer donating clothes in good condition to extend their life. Check local NGOs: some collect textiles door-to-door or have shop drop-off points."
+        ],
+        maps: "punto limpio cercano a mí"
+      },
+
+      'shoes': {
+        title: "Shoes",
+        groupBadge: "NGO containers",
+        summary: "Textile containers (white/orange) managed by NGOs (e.g. Cáritas, Humana, Cruz Roja).",
+        notes: [
+          "Tie shoes together (laces) and place them in a bag before drop-off."
+        ],
+        do: [
+          "Donate shoes in good condition to extend their life."
+        ],
+        dont: [
+          "Do not place heavily damaged, unusable or very dirty shoes in textile containers, use grey bin."
+        ],
+        tips: [
+          "Check local campaigns: some charities collect shoes separately."
+        ],
+        maps: "punto limpio cercano a mí"
+      },
+
+      'electronics': {
+        title: "Electronics (WEEE)",
+        groupBadge: "Punto Limpio",
+        summary: "Take electronics to Punto limpio or retailer take-back points.",
+        notes: [
+          "By law, shops must take back an old device when you buy a new one of the same type."
+        ],
+        do: [
+          "Store safely until drop-off.",
+          "Ask retailers if they offer free in-store collection.",
+          "Remove batteries from devices and recycle them separately."
+        ],
+        dont: [
+          "Do not put electronics in household bins.",
+          "Do not dismantle devices yourself (they may contain hazardous materials)."
+        ],
+        tips: [
+          "Some NGOs and campaigns refurbish old phones for social use. Check if your city has e-waste collection campaigns for small electronics."
+        ],
+        maps: "punto limpio cercano a mí"
+      },
+
+      'metal_packaging': {
+        title: "Metal packaging",
+        groupBadge: "Yellow bin",
+        summary: "Metal packaging such as cans, clean aluminium foil and empty aerosols go in the yellow bin.",
+        notes: [
+          "Metal packaging is one of the most valuable materials in the recycling system."
+        ],
+        do: [
+          "Rinse cans or foil lightly if needed.",
+          "Crush cans to save space.",
+          "Empty aerosols completely before recycling."
+        ],
+        dont: [
+          "Do not put non-packaging metals (pots, cutlery, tools, hangers) in the yellow bin.",
+          "Do not recycle aluminium foil dirty with food or grease (use grey bin)."
+        ],
+        tips: [
+          "Aluminium and steel packaging can be recycled infinitely without losing quality."
+        ],
+        maps: null
+      },
+
+      'plastic': {
+        title: "Plastic packaging",
+        groupBadge: "Yellow bin",
+        summary: "Plastic packaging (bottles, trays, bags, films, yoghurt pots, etc.) goes in the yellow bin.",
+        notes: [
+          "Check for the recycling symbol ♻️ on packaging to be sure it belongs in the yellow bin."
+        ],
+        do: [
+          "Empty and flatten bottles or containers.",
+          "Separate caps and lids if required by your municipality."
+        ],
+        dont: [
+          "Do not recycle toys, buckets, furniture or other non-packaging plastics."
+        ],
+        tips: [
+          "Reuse plastic bags and bottles whenever possible before recycling."
+        ],
+        maps: null
+      },
+
+      'tetrapak': {
+        title: "Cartons (Tetra Pak)",
+        groupBadge: "Yellow bin",
+        summary: "Briks are composite packaging (cardboard + plastic + aluminium) and must go in the yellow bin.",
+        notes: [
+          "Looks like cardboard but is classified as packaging."
+        ],
+        do: [
+          "Empty and flatten cartons before recycling.",
+          "Rinse lightly if needed to avoid smells."
+        ],
+        dont: [
+          "Do not throw cartons in the blue bin (paper/cardboard).",
+          "Do not recycle cartons with liquid inside."
+        ],
+        tips: [
+          "Cartons are separated into cardboard, aluminium and plastic during recycling."
+        ],
+        maps: null
+      },
+
+      'oil': {
+        title: "Used oil",
+        groupBadge: "Orange bin",
+        summary: "Cooking oil should be taken to orange containers or Punto limpio. Motor oil must be delivered to workshops or Punto limpio.",
+        notes: [
+          "One litre of used oil can contaminate 1,000 litres of water."
+        ],
+        do: [
+          "Store used oil in a closed plastic bottle before drop-off.",
+          "Take motor oil directly to a workshop or Punto limpio."
+        ],
+        dont: [
+          "Do not pour oil down the sink or toilet.",
+          "Do not mix oil with other liquids."
+        ],
+        tips: [
+          "Cooking oil is often recycled into biodiesel or soap."
+        ],
+        maps: "punto limpio cercano a mí"
+      },
+
+      'organic': {
+        title: "Organic waste",
+        groupBadge: "Brown bin",
+        summary: "Food and garden waste should be placed in the brown bin using compostable bags. If no brown bin, use grey bin.",
+        notes: [
+          "Includes food scraps, peels, coffee grounds, small garden waste."
+        ],
+        do: [
+          "Use compostable bags with the brown bin.",
+          "Take large amounts of garden waste to Punto limpio."
+        ],
+        dont: [
+          "Do not mix with plastics, glass or metals.",
+          "Do not throw pet excrement, diapers or sanitary products in the brown bin."
+        ],
+        tips: [
+          "Composting turns organic waste into fertiliser or biogas."
+        ],
+        maps: null
+      },
+
+      'trash': {
+        title: "Non-recyclable waste",
+        groupBadge: "Grey bin",
+        summary: "Hygienic and personal waste (diapers, masks, cat litter, toothbrushes, etc.) must go in the grey bin.",
+        notes: [
+          "These items cannot be recycled due to contamination and mixed materials."
+        ],
+        do: [
+          "Wrap sharp or dangerous items (e.g. broken glass, ceramics) before disposal.",
+          "Place pet waste, cat litter or small textiles in a sealed bag before throwing away.",
+          "Use the grey bin for small non-recyclable plastics (toys, cutlery, broken items)."
+        ],
+        dont: [
+          "Do not put recyclables here.",
+          "Do not throw electronics or batteries in the grey bin (take them to Punto limpio)."
+        ],
+        tips: [
+          "Reduce grey bin waste by choosing reusable alternatives (cloth bags, reusable nappies...).",
+           "Separate recyclable parts before disposal when possible."
+        ],
+        maps: null
+      },
+
+      'unknown': {
+        title: "Unknown item",
+        groupBadge: "Check",
+        summary: "We couldn’t confidently recognise this item. If it is waste and you are unsure, ask your municipality or take it to a Punto limpio.",
+        notes: [
+          "Some materials need specialised collection channels."
+        ],
+        do: [
+          "Ask at your local Punto limpio for guidance."
+        ],
+        dont: [
+          "Do not guess and throw items in random bins."
+        ],
+        tips: [
+          "Try uploading a clearer photo or adjust the category manually."
+        ],
+        maps: "punto limpio cercano a mí"
+      }
+    };
+
+    // ------------------------------------------------------------
+    // Guidance rendering
+    // ------------------------------------------------------------
+    const groupBadge = document.getElementById('groupBadge');
+    const summaryEl  = document.getElementById('summary');
+    const notesEl    = document.getElementById('notes');
+    const dosDontsEl = document.getElementById('dosDonts');
+    const doListEl   = document.getElementById('doList');
+    const dontListEl = document.getElementById('dontList');
+    const tipsEl     = document.getElementById('tips');
+    const mapsBtn    = document.getElementById('mapsBtn');
+
+    function renderGuidance() {
+      const recs = RECS_EN[guidanceKey] || RECS_EN['unknown'];
+
+      // Badge
+      if (recs.groupBadge) { groupBadge.textContent = recs.groupBadge; groupBadge.classList.remove('hidden'); }
+      else { groupBadge.classList.add('hidden'); }
+
+      // Summary
+      summaryEl.textContent = recs.summary || '';
+
+      // Notes
+      if (recs.notes && recs.notes.length) {
+        notesEl.innerHTML = recs.notes.map(n => `• ${n}`).join('<br/>');
+        notesEl.classList.remove('hidden');
+      } else {
+        notesEl.classList.add('hidden');
+        notesEl.innerHTML = '';
+      }
+
+      // Do / Don’t
+      const hasDo = recs.do && recs.do.length;
+      const hasDont = recs.dont && recs.dont.length;
+      if (hasDo || hasDont) {
+        doListEl.innerHTML   = (recs.do   || []).map(t => `<li>${t}</li>`).join('');
+        dontListEl.innerHTML = (recs.dont || []).map(t => `<li>${t}</li>`).join('');
+        dosDontsEl.classList.remove('hidden');
+      } else {
+        dosDontsEl.classList.add('hidden');
+        doListEl.innerHTML = '';
+        dontListEl.innerHTML = '';
+      }
+
+      // Extra tips
+      tipsEl.innerHTML = (recs.tips || []).map(t => `<p class="text-sm">• ${t}</p>`).join('');
+
+      // Maps button
+      if (recs.maps) {
+        const url = `https://www.google.com/maps/search/${encodeURIComponent(recs.maps)}`;
+        mapsBtn.setAttribute('href', url);
+        mapsBtn.classList.remove('hidden');
+      } else {
+        mapsBtn.classList.add('hidden');
+        mapsBtn.removeAttribute('href');
+      }
+    }
+    renderGuidance();
+
+    // ------------------------------------------------------------
+    // Manual correction → set guidanceKey directly
+    // ------------------------------------------------------------
+    const manualCat = document.getElementById('manualCat');
+    manualCat.addEventListener('change', () => {
+      if (!manualCat.value) return;
+      guidanceKey = manualCat.value;           // set group
+      detectedDisplay = (manualCat.value === 'glass') ? 'Glass' :
+                        (manualCat.options[manualCat.selectedIndex].text || manualCat.value);
+      conf = 1.0;                              // confirmed
+      warnBox.classList.add('hidden');
+      renderDetected();
+      renderGuidance();
+    });
+
+    // ------------------------------------------------------------
+    // Navigation
+    // ------------------------------------------------------------
+    document.getElementById('btnBack').addEventListener('click', () => { window.location.href = 'scan.html'; });
+    document.getElementById('btnNew').addEventListener('click', () => {
+      try {
+        sessionStorage.removeItem('ecoscan_preview');
+        sessionStorage.removeItem('ecoscan_last_image'); // legacy
+        sessionStorage.removeItem('ecoscan_prediction');
+      } catch(e) {}
+      window.location.href = 'scan.html';
+    });
+  </script>
+</body>
+</html>

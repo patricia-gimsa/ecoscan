@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoScan - Start</title>
+  <!-- # TailwindCSS CDN for styling (requires internet connection) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* # OPTIONAL: fine-tune background image behavior here */
+    .eco-bg {
+      /* # Cover the whole screen, keep centered, no repeat */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen relative font-sans">
+  <!-- # LAYER 1: Background image -->
+  <div class="fixed inset-0 bg-cover bg-center"
+       style="background-image: url('../static/eco_background.png');"></div>
+
+  <!-- # LAYER 2: Very light overlay -->
+  <div class="fixed inset-0 bg-gradient-to-b from-green-200/15 via-green-300/10 to-green-400/15"></div>
+
+  <!-- # LAYER 3: Content (card) -->
+  <main class="relative min-h-screen flex items-center justify-center px-4">
+    <!-- # White card with rounded corners and shadow -->
+    <div class="bg-white/95 backdrop-blur rounded-2xl shadow-xl w-full max-w-md p-8 flex flex-col items-center text-center">
+
+      <!-- # EcoScan logo -->
+      <div class="mb-2">
+        <img src="../static/ecoscan_logo.png"
+             alt="EcoScan Logo"
+             class="mx-auto"
+             style="width: 340px; height: auto;" />
+      </div>
+
+      <!-- # Title + subtitle -->
+      <h1 class="text-2xl font-extrabold text-green-700 mb-2">Welcome to EcoScan</h1>
+      <p class="text-gray-600 mb-8">Select your country or region to get started</p>
+
+      <!-- # Country selector with round flag displayed inside the control (left side) -->
+      <div class="w-full mb-6 text-left">
+        <label for="country" class="block text-sm font-medium text-gray-700 mb-2">Country</label>
+
+        <!-- # Wrapper to place a circular flag icon inside the select field -->
+        <div class="relative">
+          <!-- # Round Spain flag (from FlagCDN). Swap to local asset later if you want -->
+          <span
+            class="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full ring-1 ring-green-500/40"
+            style="background-image:url('https://flagcdn.com/w80/es.png'); background-size:cover; background-position:center;"
+            aria-hidden="true"></span>
+
+          <!-- # Native select (reliable across devices). Options cannot contain images -->
+          <select
+            id="country"
+            name="country"
+            class="w-full pl-12 pr-10 py-3 border border-green-500/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 appearance-none"
+            aria-label="Country selector">
+            <option value="es">Spain</option>
+            <!-- # Future: add more countries as plain text options -->
+          </select>
+
+          <!-- # Little caret icon on the right (pure CSS) -->
+          <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-700" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd" />
+            </svg>
+          </span>
+        </div>
+      </div>
+
+      <!-- # Main CTA button (no inline onclick; handled by JS below) -->
+      <button id="startBtn"
+              class="w-full bg-green-600 text-white font-semibold py-3 rounded-xl shadow-md hover:bg-green-700 active:scale-[0.99] transition"
+              aria-label="Start scanning">
+        Start
+      </button>
+
+      <!-- # Small footer -->
+      <p class="text-xs text-gray-400 mt-6">EcoScan © 2025</p>
+    </div>
+  </main>
+
+  <script>
+    // # Save selected country and navigate to scan.html
+    const startBtn   = document.getElementById('startBtn');
+    const countrySel = document.getElementById('country');
+
+    startBtn.addEventListener('click', () => {
+      // # Read the current selection (default 'es' if empty)
+      const country = (countrySel && countrySel.value) ? countrySel.value : 'es';
+
+      // # Store it so other pages (scan/results) can read it later
+      try {
+        localStorage.setItem('ecoscan_country', country);
+      } catch (e) {
+        // # If storage is blocked, we just continue without saving
+        console.warn('Could not save country to localStorage:', e);
+      }
+
+      // # Go to the next step
+      window.location.href = 'scan.html';
+    });
+  </script>
+</body>
+</html>

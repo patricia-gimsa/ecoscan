@@ -1,0 +1,31 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+
+# Environment files
+.env
+*.env
+
+# Data (ignore everything except a sample folder if you want)
+data/*
+
+# Models (ignore all weights)
+models/*
+!models/.gitkeep
+
+# Serialized models
+*.pkl
+*.joblib
+
+# System files
+.DS_Store
+Thumbs.db
