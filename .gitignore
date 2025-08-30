@@ -15,7 +15,7 @@ venv/
 .env
 *.env
 
-# Data (ignore everything except a sample folder if you want)
+# Data
 data/*
 
 # Models (ignore all weights)
